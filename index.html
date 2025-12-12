@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skin Triage: Multimodal & Tracking</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="survey-section">
+        <h1>📝 사전 임상 설문</h1>
+        <p class="subtitle">정확한 AI 진단을 위해 현재 상태를 알려주세요.</p>
+        
+        <div class="question-box">
+            <label>1. 최근 병변의 크기가 변했습니까?</label>
+            <select id="q-change">
+                <option value="0">변화 없음</option>
+                <option value="1">조금 커짐</option>
+                <option value="2">급격히 커짐 (위험)</option>
+            </select>
+        </div>
+
+        <div class="question-box">
+            <label>2. 통증, 가려움, 출혈이 있습니까?</label>
+            <select id="q-symptom">
+                <option value="0">없음</option>
+                <option value="2">있음 (위험)</option>
+            </select>
+        </div>
+
+        <button onclick="finishSurvey()">설문 완료 및 진단 시작</button>
+    </div>
+
+
+    <div id="main-section" style="display: none;">
+        <h1>📸 Skin Triage AI</h1>
+        
+        <p id="ghost-message" class="warning-msg" style="display: none;">
+            👻 이전 기록이 있습니다. 반투명한 사진에 병변 위치를 맞춰주세요.
+        </p>
+
+        <div id="webcam-container">
+            <img id="ghost-image" src="" alt="Ghost Overlay">
+        </div>
+
+        <div id="label-container"></div>
+
+        <div id="final-result"></div>
+
+        <button onclick="saveCurrentStatus()" class="save-btn">
+            현재 상태 저장 (추적 관찰용)
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    
+    <script src="script.js"></script>
+
+</body>
+</html>
