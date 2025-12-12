@@ -146,6 +146,7 @@ function saveCurrentStatus() {
     alert("✅ 현재 상태가 저장되었습니다.\n다음에 접속하면 이 사진이 가이드로 뜹니다!");
 }
 
+
 // --- 6. 고스트 이미지 불러오기 ---
 function loadGhostImage() {
     // 저장된 이미지가 있는지 확인
@@ -164,6 +165,8 @@ function loadGhostImage() {
         const msgTag = document.getElementById('ghost-message');
         
         if (imgTag) {
+
+
             imgTag.src = savedImage;
             imgTag.style.display = 'block'; // 이미지 보이기
             if(msgTag) msgTag.style.display = 'block'; // 메시지 보이기
