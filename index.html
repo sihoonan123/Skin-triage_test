@@ -3,61 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skin Triage: Multimodal & Tracking</title>
+    <title>Skin Triage in Your Backpack</title>
     <link rel="stylesheet" href="style.css">
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <!-- Teachable Machine Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 </head>
 <body>
-
-    <div id="survey-section">
-        <h1>📝 사전 임상 설문</h1>
-        <p class="subtitle">정확한 AI 진단을 위해 현재 상태를 알려주세요.</p>
-        
-        <div class="question-box">
-            <label>1. 최근 병변의 크기가 변했습니까?</label>
-            <select id="q-change">
-                <option value="0">변화 없음</option>
-                <option value="1">조금 커짐</option>
-                <option value="2">급격히 커짐 (위험)</option>
-            </select>
+    <!-- 첫 방문자 가이드 오버레이 -->
+    <div id="tutorialOverlay" class="tutorial-overlay">
+        <div class="tutorial-content">
+            <h2>👋 환영합니다!</h2>
+            <div class="tutorial-steps">
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <p>밝고 선명한 피부 사진을 준비하세요</p>
+                </div>
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <p>사진을 업로드하거나 촬영하세요</p>
+                </div>
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <p>AI 분석 결과를 확인하세요</p>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="closeTutorial()">시작하기</button>
         </div>
-
-        <div class="question-box">
-            <label>2. 통증, 가려움, 출혈이 있습니까?</label>
-            <select id="q-symptom">
-                <option value="0">없음</option>
-                <option value="2">있음 (위험)</option>
-            </select>
-        </div>
-
-        <button onclick="finishSurvey()">설문 완료 및 진단 시작</button>
     </div>
 
+    <div class="container">
+        <!-- 헤더 -->
+        <header>
+            <div class="logo">🎒 Skin Triage</div>
+            <button class="help-btn" onclick="showTutorial()">❓ 도움말</button>
+        </header>
 
-    <div id="main-section" style="display: none;">
-        <h1>📸 Skin Triage AI</h1>
-        
-        <p id="ghost-message" class="warning-msg" style="display: none;">
-            👻 이전 기록이 있습니다. 반투명한 사진에 병변 위치를 맞춰주세요.
-        </p>
+        <!-- 메인 콘텐츠 -->
+        <main>
+            <h1>피부 상태 AI 분석기</h1>
+            <p class="subtitle">사진으로 피부 상태를 간단히 확인해보세요</p>
 
-        <div id="webcam-container">
-            <img id="ghost-image" src="" alt="Ghost Overlay">
-        </div>
+            <!-- 의료 면책 조항 -->
+            <div class="disclaimer">
+                ⚠️ <strong>중요:</strong> 이 서비스는 교육 목적으로만 제공되며 의료 진단을 대체하지 않습니다. 
+                피부 질환이 의심되면 반드시 전문의와 상담하세요.
+            </div>
 
-        <div id="label-container"></div>
+            <!-- 이미지 업로드 섹션 -->
+            <div class="upload-section">
+                <div class="upload-guide">
+                    <h3>📸 촬영 가이드</h3>
+                    <ul>
+                        <li>✅ 밝은 조명에서 촬영하세요</li>
+                        <li>✅ 피부 부위에 가까이 초점을 맞추세요</li>
+                        <li>✅ 흔들림 없이 선명하게 촬영하세요</li>
+                        <li>❌ 어둡거나 흐릿한 사진은 피하세요</li>
+                    </ul>
+                </div>
 
-        <div id="final-result"></div>
+                <div class="upload-container">
+                    <input type="file" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
+                    <label for="imageUpload" class="upload-label">
+                        <div class="upload-icon">📷</div>
+                        <p>사진 선택 또는 촬영</p>
+                        <span class="file-info">JPG, PNG 파일 지원</span>
+                    </label>
+                </div>
+            </div>
 
-        <button onclick="saveCurrentStatus()" class="save-btn">
-            현재 상태 저장 (추적 관찰용)
-        </button>
+            <!-- 이미지 미리보기 -->
+            <div id="imagePreview" class="image-preview" style="display: none;">
+                <h3>업로드한 이미지</h3>
+                <div class="preview-container">
+                    <img id="uploadedImage" alt="업로드된 이미지">
+                    <div id="brightnessWarning" class="warning-badge" style="display: none;">
+                        ⚠️ 사진이 너무 어둡습니다
+                    </div>
+                </div>
+                <button class="btn-secondary" onclick="resetUpload()">다시 선택</button>
+            </div>
+
+            <!-- 분석 중 로딩 -->
+            <div id="loadingSection" class="loading-section" style="display: none;">
+                <div class="spinner"></div>
+                <p>AI가 이미지를 분석하고 있습니다...</p>
+            </div>
+
+            <!-- 결과 섹션 -->
+            <div id="resultSection" class="result-section" style="display: none;">
+                <h2>📊 분석 결과</h2>
+                
+                <!-- 최상위 예측 -->
+                <div id="topPrediction" class="top-prediction"></div>
+
+                <!-- 신뢰도가 낮을 때 재촬영 안내 -->
+                <div id="retryPrompt" class="retry-prompt" style="display: none;">
+                    <h4>🔄 더 정확한 분석을 위해</h4>
+                    <p>신뢰도가 낮습니다. 다음 방법을 시도해보세요:</p>
+                    <ul>
+                        <li>더 밝은 조명에서 다시 촬영</li>
+                        <li>피부 부위에 더 가까이 촬영</li>
+                        <li>카메라 흔들림 없이 촬영</li>
+                    </ul>
+                    <button class="btn-primary" onclick="resetUpload()">다시 촬영하기</button>
+                </div>
+
+                <!-- 상위 3개 예측 결과 -->
+                <div class="predictions-container">
+                    <h3>상위 예측 결과</h3>
+                    <div id="allPredictions"></div>
+                </div>
+
+                <!-- 다음 단계 안내 -->
+                <div class="next-steps">
+                    <h3>📋 다음 단계</h3>
+                    <div id="recommendationText"></div>
+                </div>
+
+                <button class="btn-secondary" onclick="resetUpload()">새로운 이미지 분석</button>
+            </div>
+
+            <!-- 모델 로딩 실패 시 -->
+            <div id="errorSection" class="error-section" style="display: none;">
+                <h3>⚠️ 오류 발생</h3>
+                <p id="errorMessage"></p>
+                <button class="btn-secondary" onclick="location.reload()">페이지 새로고침</button>
+            </div>
+        </main>
+
+        <!-- 푸터 -->
+        <footer>
+            <p>Team G20 - Skin Triage in Your Backpack</p>
+            <p class="small-text">Powered by TensorFlow.js & Teachable Machine</p>
+        </footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-    
     <script src="script.js"></script>
-
 </body>
 </html>
-''''
