@@ -2,7 +2,7 @@
 // ===============================================
 // [사용자 설정 영역] 모델 주소 (따옴표 필수!)
 // model.json 파일이 있는 위치입니다.
-const URL = "https://sihoonan123.github.io/Skin-triage_test/"; 
+const URL = "https://sihoonan123.github.io/Skin-triage_test/my_model/";
 // ===============================================
 
 let model, webcam, labelContainer, maxPredictions;
